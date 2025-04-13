@@ -4,6 +4,13 @@
 2. 自动检查各库是否已经安装  
 3. 分离式安装，即使没有该库也可以自由选择是否安装  
 
+**可以安装的库：**  
+1. abseil-cpp
+2. googletest
+3. ceres-solver
+4. Sophus
+5. g2o
+
 **正在实现的功能：**  
 1. 自动安装OpenCV  
 
