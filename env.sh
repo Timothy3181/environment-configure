@@ -15,6 +15,8 @@ G2O_PATH="https://github.com/RainerKuemmerle/g2o.git"
 TEMP_DIR="$HOME/env_temp"
 INSTALL_DIR="/usr/local"
 
+MROSDEP_PATH="https://gitee.com/tyx6/mytools/raw/main/ros/Mrosdep.py"
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 DEPENDENCIES_EXIST=false
@@ -481,6 +483,30 @@ install_ros2() {
     echo -e "${GREEN}ROS2 Humble install successfully${NC}"
 }
 
+install_rosdep() {
+    echo -e "${YELLOW}Ready to install rosdep${NC}"
+    sleep 0.5
+    echo -e "${YELLOW}Installing rosdep...${NC}"
+    apt install -y python3-rosdep || {
+        echo -e "${RED}Download failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Changing source...${NC}"
+    cd "${TEMP_DIR}" && wget "${MROSDEP_PATH}" || {
+        echo -e "${RED}Change failed${NC}"
+        deal_with_fail
+    }
+    python3 Mrosdep.py
+    sleep 1
+    echo -e "${YELLOW}Init rosdep${NC}"
+    rosdep init || {
+        echo -e "${RED}Init failed${NC}"
+        deal_with_fail
+    }
+    echo -e "${GREEN}Install successful.Remember to run 'rosdep update' in your terminal${NC}"
+}
+
 install_whole_environment() {
     install_abseil
     install_gtest
@@ -581,6 +607,7 @@ start_menu() {
         "[3]Configure OpenSSH"
         "[4]Install ROS2 Humble(Desktop Version)"
         "[5]Install MVViewer 2.3.1 x86(Haven't done yet)"
+        "[6]Install rosdep"
         "[0]Exit"
     )
     for text in "${texts[@]}"; do
@@ -630,6 +657,9 @@ start_choice() {
             ;;
         5)
             echo -e "${RED}Haven't done yet${NC}"
+            ;;
+        6)
+            install_rosdep
             ;;
         0)
             exit 0
