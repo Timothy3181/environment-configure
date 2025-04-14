@@ -435,6 +435,46 @@ install_opencv() {
     echo -e "${GREEN}Installation successful${NC}"
 }
 
+install_ros2() {
+    echo -e "${YELLOW}Ensure UTF-8 has been enabled${NC}"
+    apt install locales && locale-gen en_US en_US.UTF-8 && update-locale LC_ALL=en_US.UTF-8 LANG=en_US.UTF-8 && export LANG=en_US.UTF-8 || {
+        echo -e "${RED}UTF-8 configuration failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Enable Universe source${NC}"
+    apt install -y software-properties-common && add-apt-repository -y universe || {
+        echo -e "${RED}Cannot enable Universe source${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Adding ROS2 GPG Key${NC}"
+    apt install -y curl gnupg2
+    curl -sSL https://gitee.com/tyx6/rosdistro/raw/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.GPG || {
+        echo -e "${RED}Key adding error${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Adding ROS2 repository${NC}"
+    echo "deb [arch=$(dpkg --print-architecture) signed-by=/usr/share/keyrings/ros-archive-keyring.gpg] https://mirrors.tuna.tsinghua.edu.cn/ros2/ubuntu $(. /etc/os-release && echo $UBUNTU_CODENAME) main" | sudo tee /etc/apt/sources.list.d/ros2.list > /dev/null || {
+        echo -e "${RED}Cannot add the repository${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Downloading ROS2...${NC}"
+    apt install -y ros-humble-desktop || {
+        echo -e "${RED}Download failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Configure the environment${NC}"
+    echo "source /opt/ros/humble/setup.bash" >> ~/.bashrc || {
+        echo -e "${RED}Failed to configure the .bashrc in ~/${NC}"
+        deal_with_fail
+    }
+    echo -e "${GREEN}ROS2 Humble install successfully${NC}"
+}
+
 install_whole_environment() {
     install_abseil
     install_gtest
@@ -508,7 +548,7 @@ sudo_check() {
     for text in "${text1[@]}"; do 
         for (( i=0; i<${#text}; i++ )); do
             printf "%s" "${text:$i:1}"
-            sleep 0.04
+            sleep 0.03
         done
         echo
     done
@@ -533,13 +573,13 @@ start_menu() {
         "[1]Start the installation by source"
         "[2]Install OpenCV(Version 4.11.0)"
         "[3]Configure OpenSSH"
-        "[3]Install Ros2 Humble(Haven't done yet)"
-        "[4]Install MVViewer 3.1.0 x86(Haven't done yet)"
+        "[4]Install ROS2 Humble(Desktop Version)"
+        "[5]Install MVViewer 2.3.1 x86(Haven't done yet)"
     )
     for text in "${texts[@]}"; do
         for (( i=0; i<${#text}; i++ )); do
             printf "%s" "${text:$i:1}"
-            sleep 0.04
+            sleep 0.03
         done
         echo
     done
@@ -559,7 +599,7 @@ show_menu() {
     for text in "${texts[@]}"; do
         for (( i=0; i<${#text}; i++ )); do
             printf "%s" "${text:$i:1}"
-            sleep 0.04
+            sleep 0.03
         done
         echo
     done
@@ -579,7 +619,7 @@ start_choice() {
             configure_openssh
             ;;
         4)
-            echo -e "${RED}Haven't done yet${NC}"
+            install_ros2
             ;;
         5)
             echo -e "${RED}Haven't done yet${NC}"
