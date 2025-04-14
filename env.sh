@@ -472,6 +472,12 @@ install_ros2() {
         echo -e "${RED}Failed to configure the .bashrc in ~/${NC}"
         deal_with_fail
     }
+    source ~/.bashrc
+    sleep 1
+    echo -e "${YELLOW}Install remaining colcon tools${NC}"
+    apt install -y python3-colcon-common-extensions python3-argcomplete || {
+        echo -e "${RED}Colcon tools installation failed${NC}"
+    }
     echo -e "${GREEN}ROS2 Humble install successfully${NC}"
 }
 
@@ -575,6 +581,7 @@ start_menu() {
         "[3]Configure OpenSSH"
         "[4]Install ROS2 Humble(Desktop Version)"
         "[5]Install MVViewer 2.3.1 x86(Haven't done yet)"
+        "[0]Exit"
     )
     for text in "${texts[@]}"; do
         for (( i=0; i<${#text}; i++ )); do
