@@ -464,7 +464,7 @@ configure_openssh() {
     sleep 1
     echo -e "${YELLOW}Setting...${NC}"
     sleep 1
-    systemctl enable sshd || {
+    systemctl enable ssh || {
         echo -e "${RED}Cannot start ssh service${NC}"
         exit 1
     }
