@@ -5,6 +5,7 @@ RED='\033[0;31m'
 YELLOW='\033[0;33m'
 NC='\033[0m'
 
+OPENCV_PATH="https://github.com/opencv/opencv/archive/refs/tags/4.11.0.zip"
 ABSEIL_PATH="https://github.com/abseil/abseil-cpp/releases/download/20250127.1/abseil-cpp-20250127.1.tar.gz"
 GOOGLE_TEST_PATH="https://github.com/google/googletest/releases/download/v1.16.0/googletest-1.16.0.tar.gz"
 CERES_PATH="https://github.com/ceres-solver/ceres-solver.git"
@@ -45,7 +46,7 @@ check_make_env() {
         if apt list "$m_pkg" 2>/dev/null | grep -q "installed"; then
             echo -e "$m_pkg: ${GREEN}Found${NC}"
         else
-            echo -e "$m_pkg: Missing, trying to install..."
+            echo -e "$m_pkg: ${RED}Missing, trying to install...${NC}"
             if apt install -y "$m_pkg"; then
                 echo -e "$m_pkg: ${GREEN}Installed successfully${NC}"
             else
@@ -390,6 +391,50 @@ install_g2o() {
     echo -e "${GREEN}Installation successful${NC}"
 }
 
+install_opencv() {
+    echo -e "${YELLOW}Ready to install OpenCV 4.11.0${NC}"
+    sleep 1
+    cd "${TEMP_DIR}" || {
+        echo -e "${RED}Cannot turn the ~/env_temp${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Downloading OpenCV 4.11.0${NC}"
+    wget "${OPENCV_PATH}" || {
+        echo -e "${RED}Download Failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Decompressing...${NC}"
+    unzip ./4.11.0.zip || {
+        echo -e "${RED}Decompress Failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Build and run${NC}"
+    mkdir -p "${TEMP_DIR}/opencv-4.11.0/build" && cd "${TEMP_DIR}/opencv-4.11.0/build" || {
+        echo -e "${RED}Cannot make a directory build/ or turn to the build/${NC}"
+        deal_with_fail
+    }
+    cmake .. \
+        -DCMAKE_BUILD_TYPE=Release \
+        -DBUILD_SHARED_LIBS=ON || {
+            echo -e "${RED}Failed to install OpenCV 4.11.0${NC}"
+            deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Make install${NC}"
+    make -j1 || {
+        echo -e "${RED}Make failed${NC}"
+        deal_with_fail
+    }
+    make install || {
+        echo -e "${RED}Make install failed${NC}"
+        deal_with_fail
+    }
+    echo -e "${GREEN}Installation successful${NC}"
+}
+
 install_whole_environment() {
     install_abseil
     install_gtest
@@ -398,15 +443,50 @@ install_whole_environment() {
     install_g2o
 }
 
+configure_openssh() {
+    echo -e "${YELLOW}Checking dependencies${NC}"
+    local ssh_packages=("openssh-server" "ufw")
+    for s_pkg in "${ssh_packages[@]}"; do
+        echo -e "${YELLOW}Finding $s_pkg${NC}"
+        if apt list "$s_pkg" 2>/dev/null | grep -q "installed"; then
+            echo -e "$s_pkg: ${GREEN}Found${NC}"
+        else
+            echo -e "$s_pkg: ${RED}Missing, trying to install...${NC}"
+            if apt install -y "$s_pkg"; then
+                echo -e "$s_pkg: ${GREEN}Installed successfully${NC}"
+            else
+                echo -e "$pkg: ${RED}Installation failed. Please check the problem and fix it manually.${NC}"
+                exit 1
+            fi
+        fi
+    done
+    echo -e "${GREEN}Success${NC}"
+    sleep 1
+    echo -e "${YELLOW}Setting...${NC}"
+    sleep 1
+    systemctl enable sshd || {
+        echo -e "${RED}Cannot start ssh service${NC}"
+        exit 1
+    }
+    echo -e "${GREEN}SSH START${NC}"
+    sleep 1
+    echo -e "${YELLOW}Allowing port 22...${NC}"
+    ufw allow 22/tcp || {
+        echo -e "${RED}Cannot allow port 22${NC}"
+        exit 1
+    }
+    echo -e "${GREEN}You can try to connect the computer by ssh${NC}"
+}
+
 check_dependencies() {
-    echo "Checking dependencies"
+    echo -e "${YELLOW}Checking dependencies${NC}"
     local packages=("libfmt-dev" "liblapack-dev" "libsuitesparse-dev" "libcxsparse3" "libgflags-dev" "libgoogle-glog-dev" "libgtest-dev" "libceres-dev" "git")
     for pkg in "${packages[@]}"; do
         echo -e "${YELLOW}Finding $pkg${NC}"
         if apt list "$pkg" 2>/dev/null | grep -q "installed"; then
             echo -e "$pkg: ${GREEN}Found${NC}"
         else
-            echo "$pkg: Missing, trying to install..."
+            echo -e "$pkg: ${RED}Missing, trying to install...${NC}"
             if apt install -y "$pkg"; then
                 echo -e "$pkg: ${GREEN}Installed successfully${NC}"
             else
@@ -445,6 +525,26 @@ sudo_check() {
     fi
 }
 
+start_menu() {
+    local texts=(
+        "If you haven't install other packages for example OpenCV."
+        "Here are some choice provided if you want to fix your environment."
+        "Tips: Make sure you can connect to github.com."
+        "[1]Start the installation by source"
+        "[2]Install OpenCV(Version 4.11.0)"
+        "[3]Configure OpenSSH"
+        "[3]Install Ros2 Humble(Haven't done yet)"
+        "[4]Install MVViewer 3.1.0 x86(Haven't done yet)"
+    )
+    for text in "${texts[@]}"; do
+        for (( i=0; i<${#text}; i++ )); do
+            printf "%s" "${text:$i:1}"
+            sleep 0.04
+        done
+        echo
+    done
+}
+
 show_menu() {
     local texts=(
         "Select your installation choice:"
@@ -463,6 +563,35 @@ show_menu() {
         done
         echo
     done
+}
+
+start_choice() {
+    read -p "Please enter:" selection
+    case $selection in
+        1)
+            check_the_installation
+            menu_choice
+            ;;
+        2)
+            install_opencv
+            ;;
+        3)
+            configure_openssh
+            ;;
+        4)
+            echo -e "${RED}Haven't done yet${NC}"
+            ;;
+        5)
+            echo -e "${RED}Haven't done yet${NC}"
+            ;;
+        0)
+            exit 0
+            ;;
+        *)
+            echo -e "${RED}Please enter a legal choice.${NC}"
+            sleep 0.1
+            ;;
+    esac
 }
 
 deal_with_choice() {
@@ -486,6 +615,9 @@ deal_with_choice() {
         6)
             install_whole_environment
             ;;
+        7)
+            install_opencv
+            ;;
         0)
             exit 0
             ;;
@@ -496,12 +628,18 @@ deal_with_choice() {
     esac
 }
 
-main() {
-    sudo_check
-    check_the_installation
+menu_choice() {
     show_menu
     while true; do
         deal_with_choice
+    done
+}
+
+main() {
+    sudo_check
+    while true; do
+        start_menu
+        start_choice
     done
 }
 
