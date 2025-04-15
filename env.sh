@@ -17,6 +17,8 @@ INSTALL_DIR="/usr/local"
 
 MROSDEP_PATH="https://gitee.com/tyx6/mytools/raw/main/ros/Mrosdep.py"
 
+CAMERA_DRIVER_PATH="https://github.com/Timothy3181/environment-configure/releases/download/CameraDriver/camera.run"
+
 SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 DEPENDENCIES_EXIST=false
@@ -507,6 +509,35 @@ install_rosdep() {
     echo -e "${GREEN}Install successful.Remember to run 'rosdep update' in your terminal${NC}"
 }
 
+install_camera_driver() {
+    echo -e "${YELLOW}Ready to install camera driver${NC}"
+    sleep 0.5
+    echo -e "${YELLOW}Downloading MVViewer v2.3.1...${NC}"
+    cd "${TEMP_DIR}" && wget "${CAMERA_DRIVER_PATH}" || {
+        echo -e "${RED}Download failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Start to install the driver${NC}"
+    sudo su || {
+        echo -e "${RED}Cannot change to root${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Giving the running authority to the driver...${NC}"
+    chmod u+x ./camera.run || {
+        echo -e "${RED}Cannot give running authority${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Start to install the camera driver${NC}"
+    yes "yes" | ./camera.run || {
+        echo -e "${RED}Cannot install the camera driver\nPlease install it manually${NC}"
+        return
+    }
+    echo -e "${GREEN}Install successfully${NC}"
+}
+
 install_whole_environment() {
     install_abseil
     install_gtest
@@ -606,7 +637,7 @@ start_menu() {
         "[2]Install OpenCV(Version 4.11.0)"
         "[3]Configure OpenSSH"
         "[4]Install ROS2 Humble(Desktop Version)"
-        "[5]Install MVViewer 2.3.1 x86(Haven't done yet)"
+        "[5]Install MVViewer 2.3.1 x86(Experimental)"
         "[6]Install rosdep"
         "[0]Exit"
     )
@@ -656,7 +687,7 @@ start_choice() {
             install_ros2
             ;;
         5)
-            echo -e "${RED}Haven't done yet${NC}"
+            install_camera_driver
             ;;
         6)
             install_rosdep
