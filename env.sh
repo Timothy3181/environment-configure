@@ -530,10 +530,6 @@ install_camera_driver() {
     }
     sleep 1
     echo -e "${YELLOW}Start to install the driver${NC}"
-    sudo su || {
-        echo -e "${RED}Cannot change to root${NC}"
-        deal_with_fail
-    }
     sleep 1
     echo -e "${YELLOW}Giving the running authority to the driver...${NC}"
     chmod u+x ./camera.run || {
@@ -621,7 +617,7 @@ change_apt_source() {
         deal_with_fail
     }
     sleep 1
-    echo -e "${YELLOW}Processing...${NC}"
+    echo -e "${YELLOW}Searching the fastest mirror...${NC}"
     for mirror in "${MIRRORS[@]}"; do
         echo -e "${YELLOW}Checking $mirror...${NC}"
         local TIME=$(curl -o /dev/null -s -w "%{time_total}" "${mirror}dists/jammy/Release")
@@ -662,7 +658,7 @@ sudo_check() {
     for text in "${text1[@]}"; do 
         for (( i=0; i<${#text}; i++ )); do
             printf "%s" "${text:$i:1}"
-            sleep 0.03
+            sleep 0.02
         done
         echo
     done
@@ -690,12 +686,13 @@ start_menu() {
         "[4]Install ROS2 Humble(Desktop Version)"
         "[5]Install MVViewer 2.3.1 x86(Experimental)"
         "[6]Install rosdep"
+        "[7]Change apt source(If you configure your ubuntu for the first time, this is recommended)"
         "[0]Exit"
     )
     for text in "${texts[@]}"; do
         for (( i=0; i<${#text}; i++ )); do
             printf "%s" "${text:$i:1}"
-            sleep 0.03
+            sleep 0.02
         done
         echo
     done
@@ -715,7 +712,7 @@ show_menu() {
     for text in "${texts[@]}"; do
         for (( i=0; i<${#text}; i++ )); do
             printf "%s" "${text:$i:1}"
-            sleep 0.03
+            sleep 0.02
         done
         echo
     done
@@ -742,6 +739,9 @@ start_choice() {
             ;;
         6)
             install_rosdep
+            ;;
+        7)
+            change_apt_source
             ;;
         0)
             exit 0
@@ -773,9 +773,6 @@ deal_with_choice() {
             ;;
         6)
             install_whole_environment
-            ;;
-        7)
-            install_opencv
             ;;
         0)
             exit 0
