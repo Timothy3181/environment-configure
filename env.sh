@@ -462,7 +462,7 @@ install_ros2() {
     sleep 1
     echo -e "${YELLOW}Adding ROS2 GPG Key${NC}"
     apt install -y curl gnupg2
-    curl -sSL https://gitee.com/tyx6/rosdistro/raw/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.GPG || {
+    curl -sSL https://raw.githubusercontent.com/ros/rosdistro/master/ros.key -o /usr/share/keyrings/ros-archive-keyring.gpg || {
         echo -e "${RED}Key adding error${NC}"
         deal_with_fail
     }
