@@ -14,6 +14,7 @@ G2O_PATH="https://github.com/RainerKuemmerle/g2o.git"
 
 TEMP_DIR="$HOME/env_temp"
 INSTALL_DIR="/usr/local"
+SOURCE_LIST_DIR="/etc/apt/sources.list"
 
 MROSDEP_PATH="https://gitee.com/tyx6/mytools/raw/main/ros/Mrosdep.py"
 
@@ -23,6 +24,16 @@ SCRIPT_DIR=$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)
 
 DEPENDENCIES_EXIST=false
 MAKE_ENVIRONMENT_EXIST=false
+
+BEST_MIRROR=""
+BEST_TIME=99999
+
+MIRRORS=(
+    "https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
+    "https://mirrors.ustc.edu.cn/ubuntu/"
+    "https://mirrors.aliyun.com/ubuntu/"
+    "https://mirror.sjtu.edu.cn/ubuntu/"
+)
 
 ABSEIL_EXIST=false
 GOOGLE_TEST_EXIST=false
@@ -600,6 +611,39 @@ check_dependencies() {
     done
     echo -e "${GREEN}Finish dependencies checking${NC}"
     DEPENDENCIES_EXIST=true
+}
+
+change_apt_source() {
+    echo -e "${YELLOW}Ready to change the apt sources.list${NC}"
+    sleep 0.5
+    cp "${SOURCE_LIST_DIR}" "${TEMP_DIR}/sources.list.bak" || {
+        echo -e "${RED}Backup failed${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${YELLOW}Processing...${NC}"
+    for mirror in "${MIRRORS[@]}"; do
+        echo -e "${YELLOW}Checking $mirror...${NC}"
+        local TIME=$(curl -o /dev/null -s -w "%{time_total}" "${mirror}dists/jammy/Release")
+        if (( $(echo "$TIME < $BEST_TIME" | bc -l) )); then
+            BEST_TIME=$TIME
+            BEST_MIRROR=$mirror
+        fi
+    done || {
+        echo -e "${RED}Cannot choose the best source${NC}"
+        deal_with_fail
+    }
+    sleep 1
+    echo -e "${GREEN}The best source is $BEST_MIRROR${NC}"
+    sleep 0.5
+    echo -e "${YELLOW}Trying to change the source${NC}"
+    sh -c 'echo "deb '"${BEST_MIRROR}"' jammy main restricted universe multiverse" > /etc/apt/sources.list'
+    sh -c 'echo "deb '"${BEST_MIRROR}"' jammy-updates main restricted universe multiverse" >> /etc/apt/sources.list'
+    sh -c 'echo "deb '"${BEST_MIRROR}"' jammy-backports main restricted universe multiverse" >> /etc/apt/sources.list'
+    sh -c 'echo "deb http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list'
+    apt update || {
+        echo -e "${RED}Change failed${NC}"
+    }
 }
 
 sudo_check() {
