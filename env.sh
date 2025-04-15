@@ -617,6 +617,12 @@ change_apt_source() {
         deal_with_fail
     }
     sleep 1
+    echo -e "${YELLOW}Preparing the dependency${NC}"
+    apt install -y curl || {
+        echo -e "${RED}Cannot install curl by apt${NC}"
+        deal_with_fail
+    }
+    sleep 1
     echo -e "${YELLOW}Searching the fastest mirror...${NC}"
     for mirror in "${MIRRORS[@]}"; do
         echo -e "${YELLOW}Checking $mirror...${NC}"
