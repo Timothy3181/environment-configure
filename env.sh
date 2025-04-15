@@ -643,7 +643,14 @@ change_apt_source() {
     sh -c 'echo "deb http://security.ubuntu.com/ubuntu/ jammy-security main restricted universe multiverse" >> /etc/apt/sources.list'
     apt update || {
         echo -e "${RED}Change failed${NC}"
+        rm -rf /etc/apt/sources.list
+        cp "${TEMP_DIR}/sources.list.bak" "${SOURCE_LIST_DIR}"
+        apt update || {
+            echo -e "${RED}Reset error.Please handle it manually${NC}"
+            deal_with_fail
+        }
     }
+    echo -e "${GREEN}Change successfully${NC}"
 }
 
 sudo_check() {
