@@ -473,6 +473,7 @@ install_ros2() {
         deal_with_fail
     }
     sleep 1
+    apt update
     echo -e "${YELLOW}Downloading ROS2...${NC}"
     apt install -y ros-humble-desktop || {
         echo -e "${RED}Download failed${NC}"
