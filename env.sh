@@ -30,9 +30,6 @@ BEST_TIME=99999
 
 MIRRORS=(
     "https://mirrors.tuna.tsinghua.edu.cn/ubuntu/"
-    "https://mirrors.ustc.edu.cn/ubuntu/"
-    "https://mirrors.aliyun.com/ubuntu/"
-    "https://mirror.sjtu.edu.cn/ubuntu/"
 )
 
 ABSEIL_EXIST=false
